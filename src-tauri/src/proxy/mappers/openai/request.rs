@@ -102,17 +102,31 @@ pub fn transform_openai_request(request: &OpenAIRequest, project_id: &str, mappe
         ]
     });
 
-    // 4. Handle Tools
+    // 4. Handle Tools - Convert OpenAI format to Gemini functionDeclarations format
     if let Some(tools) = &request.tools {
-        let mut cleaned_tools = tools.clone();
-        for tool in cleaned_tools.iter_mut() {
-            if let Some(func) = tool.get_mut("function") {
-                if let Some(params) = func.get_mut("parameters") {
+        let mut function_declarations: Vec<Value> = Vec::new();
+        
+        for tool in tools.iter() {
+            // OpenAI format: { "type": "function", "function": { "name": "...", "description": "...", "parameters": {...} } }
+            // Gemini format: { "name": "...", "description": "...", "parameters": {...} }
+            if let Some(func) = tool.get("function") {
+                let mut gemini_func = func.clone();
+                
+                // Clean the JSON schema in parameters
+                if let Some(params) = gemini_func.get_mut("parameters") {
                     crate::proxy::common::json_schema::clean_json_schema(params);
                 }
+                
+                function_declarations.push(gemini_func);
             }
         }
-        inner_request["tools"] = json!(cleaned_tools);
+        
+        if !function_declarations.is_empty() {
+            // Gemini expects: { "tools": [{ "functionDeclarations": [...] }] }
+            inner_request["tools"] = json!([{
+                "functionDeclarations": function_declarations
+            }]);
+        }
     }
     
     // 5. 注入 systemInstruction (如果有)
