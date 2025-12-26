@@ -8,7 +8,7 @@
   
   <p>
     <a href="https://github.com/lbjlaq/Antigravity-Manager">
-      <img src="https://img.shields.io/badge/Version-3.2.8-blue?style=flat-square" alt="Version">
+      <img src="https://img.shields.io/badge/Version-3.2.9-blue?style=flat-square" alt="Version">
     </a>
     <img src="https://img.shields.io/badge/Tauri-v2-orange?style=flat-square" alt="Tauri">
     <img src="https://img.shields.io/badge/Backend-Rust-red?style=flat-square" alt="Rust">
@@ -174,6 +174,11 @@ print(response.choices[0].message.content)
 ## 📝 开发者与社区
 
 *   **版本演进 (Changelog)**:
+    *   **v3.2.9 (2025-12-26)**:
+        - **Bug 修复 (Bug Fixes)**:
+            - **Claude Code 400 错误最终修复**: 彻底解决了在 Claude Code 代理下调用模型工具时，因 `thought_signature` 缺失导致的 `400 INVALID_ARGUMENT` 错误。
+            - **服务端签名自动回填**: 引入了服务端签名缓存机制，支持在历史消息转换时自动找回并回填被客户端剥离的 `thought_signature`，确保长对话的稳定运行。
+            - **命名字段规范化**: 修正了转换链路中所有签名的字段命名为 `thought_signature` (蛇形)，解决 Google API 原生校验不通过的问题。
     *   **v3.2.8 (2025-12-26)**:
         - **Bug 修复 (Bug Fixes)**:
             - **OpenAI 协议多模态与图片模型支持**: 彻底修复了在 OpenAI 协议下向视觉模型(如 `gemini-3-pro-image`)发送图片请求时因 `content` 格式不匹配导致的 400 错误。

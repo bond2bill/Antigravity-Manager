@@ -8,11 +8,16 @@ use std::collections::HashMap;
 // use once_cell::sync::Lazy;
 // use regex::Regex;
 
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
 /// 转换 Claude 请求为 Gemini v1internal 格式
 pub fn transform_claude_request_in(
     claude_req: &ClaudeRequest,
     project_id: &str,
+    signature_map: Option<Arc<Mutex<HashMap<String, String>>>>,
 ) -> Result<Value, String> {
+    // ... (省略未更改部分) ...
     // 检测是否有 web_search 工具
     let has_web_search_tool = claude_req
         .tools
@@ -37,7 +42,6 @@ pub fn transform_claude_request_in(
     let config = crate::proxy::mappers::common_utils::resolve_request_config(&claude_req.model, &mapped_model);
     
     // Only Gemini models support our "dummy thought" workaround.
-    // Claude models routed via Vertex/Google API often require valid thought signatures.
     let allow_dummy_thought = config.final_model.starts_with("gemini-");
 
     // 4. Generation Config & Thinking
@@ -49,7 +53,8 @@ pub fn transform_claude_request_in(
         .unwrap_or(false);
 
     // 2. Contents (Messages)
-    let contents = build_contents(&claude_req.messages, &mut tool_id_to_name, is_thinking_enabled, allow_dummy_thought)?;
+    let contents = build_contents(&claude_req.messages, &mut tool_id_to_name, is_thinking_enabled, allow_dummy_thought, signature_map)?;
+    // ...
 
     // 3. Tools
     let tools = build_tools(&claude_req.tools, has_web_search_tool)?;
@@ -179,11 +184,13 @@ fn build_contents(
     tool_id_to_name: &mut HashMap<String, String>,
     is_thinking_enabled: bool,
     allow_dummy_thought: bool,
+    signature_map: Option<Arc<Mutex<HashMap<String, String>>>>,
 ) -> Result<Value, String> {
     let mut contents = Vec::new();
 
     let msg_count = messages.len();
     for (i, msg) in messages.iter().enumerate() {
+        // ... (省略逻辑)
         let role = if msg.role == "assistant" {
             "model"
         } else {
@@ -214,7 +221,7 @@ fn build_contents(
                                 "thought": true
                             });
                             if let Some(sig) = signature {
-                                part["thoughtSignature"] = json!(sig);
+                                part["thought_signature"] = json!(sig);
                             }
                             parts.push(part);
                         }
@@ -240,8 +247,23 @@ fn build_contents(
                             // 存储 id -> name 映射
                             tool_id_to_name.insert(id.clone(), name.clone());
 
-                            if let Some(sig) = signature {
-                                part["thoughtSignature"] = json!(sig);
+                            // 核心修复：自动从服务端缓存回填签名 (如果客户端丢失了它)
+                            let mut final_signature = signature.clone();
+                            if final_signature.is_none() {
+                                if let Some(map_arc) = &signature_map {
+                                    // 由于 build_contents 是同步环境，尝试获取锁
+                                    // 如果无法获取，则跳过（通常在高频请求中极少发生冲突）
+                                    if let Ok(m) = map_arc.try_lock() {
+                                        if let Some(cached_sig) = m.get(id) {
+                                            tracing::debug!("Restored lost signature for tool: {}", id);
+                                            final_signature = Some(cached_sig.clone());
+                                        }
+                                    }
+                                }
+                            }
+
+                            if let Some(sig) = final_signature {
+                                part["thought_signature"] = json!(sig);
                             }
                             parts.push(part);
                         }
@@ -449,7 +471,7 @@ mod tests {
             metadata: None,
         };
 
-        let result = transform_claude_request_in(&req, "test-project");
+        let result = transform_claude_request_in(&req, "test-project", None);
         assert!(result.is_ok());
 
         let body = result.unwrap();
@@ -546,7 +568,7 @@ mod tests {
             metadata: None,
         };
 
-        let result = transform_claude_request_in(&req, "test-project");
+        let result = transform_claude_request_in(&req, "test-project", None);
         assert!(result.is_ok());
 
         let body = result.unwrap();

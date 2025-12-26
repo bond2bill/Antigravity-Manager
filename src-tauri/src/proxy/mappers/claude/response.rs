@@ -4,6 +4,10 @@
 use super::models::*;
 use super::utils::to_claude_usage;
 
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use std::collections::HashMap;
+
 /// 非流式响应处理器
 pub struct NonStreamingProcessor {
     content_blocks: Vec<ContentBlock>,
@@ -12,10 +16,11 @@ pub struct NonStreamingProcessor {
     thinking_signature: Option<String>,
     trailing_signature: Option<String>,
     has_tool_call: bool,
+    signature_map: Option<Arc<Mutex<HashMap<String, String>>>>,
 }
 
 impl NonStreamingProcessor {
-    pub fn new() -> Self {
+    pub fn new(signature_map: Option<Arc<Mutex<HashMap<String, String>>>>) -> Self {
         Self {
             content_blocks: Vec::new(),
             text_builder: String::new(),
@@ -23,6 +28,7 @@ impl NonStreamingProcessor {
             thinking_signature: None,
             trailing_signature: None,
             has_tool_call: false,
+            signature_map,
         }
     }
 
@@ -86,6 +92,16 @@ impl NonStreamingProcessor {
                     crate::proxy::common::utils::generate_random_id()
                 )
             });
+
+            // 核心修复：存储签名到服务端的全局 map
+            if let (Some(sig), Some(map)) = (signature.clone(), &self.signature_map) {
+                let tid = tool_id.clone();
+                let m_clone = map.clone();
+                tokio::spawn(async move {
+                    let mut m = m_clone.lock().await;
+                    m.insert(tid, sig);
+                });
+            }
 
             let mut tool_use = ContentBlock::ToolUse {
                 id: tool_id,

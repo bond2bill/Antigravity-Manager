@@ -155,7 +155,7 @@ pub async fn handle_messages(
         // 生成 Trace ID (简单用时间戳后缀)
         // let _trace_id = format!("req_{}", chrono::Utc::now().timestamp_subsec_millis());
 
-        let gemini_body = match transform_claude_request_in(&request_with_mapped, &project_id) {
+        let gemini_body = match transform_claude_request_in(&request_with_mapped, &project_id, Some(state.thought_signature_map.clone())) {
             Ok(b) => b,
             Err(e) => {
                  return (
@@ -175,6 +175,7 @@ pub async fn handle_messages(
     let is_stream = request.stream;
     let method = if is_stream { "streamGenerateContent" } else { "generateContent" };
     let query = if is_stream { Some("alt=sse") } else { None };
+    let signature_map = state.thought_signature_map.clone();
 
     let response = match upstream.call_v1_internal(
         method,
@@ -198,7 +199,7 @@ pub async fn handle_messages(
             if request.stream {
                 let stream = response.bytes_stream();
                 let gemini_stream = Box::pin(stream);
-                let claude_stream = create_claude_sse_stream(gemini_stream);
+                let claude_stream = create_claude_sse_stream(gemini_stream, Some(signature_map));
 
                 // 转换为 Bytes stream
                 let sse_stream = claude_stream.map(|result| -> Result<Bytes, std::io::Error> {
@@ -242,7 +243,7 @@ pub async fn handle_messages(
                 };
                 
                 // 转换
-                let claude_response = match transform_response(&gemini_response) {
+                let claude_response = match transform_response(&gemini_response, Some(signature_map)) {
                     Ok(r) => r,
                     Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, format!("Transform error: {}", e)).into_response(),
                 };

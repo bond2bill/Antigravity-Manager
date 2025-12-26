@@ -8,7 +8,7 @@
   
   <p>
     <a href="https://github.com/lbjlaq/Antigravity-Manager">
-      <img src="https://img.shields.io/badge/Version-3.2.8-blue?style=flat-square" alt="Version">
+      <img src="https://img.shields.io/badge/Version-3.2.9-blue?style=flat-square" alt="Version">
     </a>
     <img src="https://img.shields.io/badge/Tauri-v2-orange?style=flat-square" alt="Tauri">
     <img src="https://img.shields.io/badge/Backend-Rust-red?style=flat-square" alt="Rust">
@@ -158,6 +158,11 @@ print(response.choices[0].message.content)
 ## 📝 Developer & Community
 
 *   **Changelog**:
+    *   **v3.2.9 (2025-12-26)**:
+        - **Bug Fixes**:
+            - **Claude Code 400 Error Final Fix**: Completely resolved the `400 INVALID_ARGUMENT` error caused by missing `thought_signature` when using tools via Claude Code proxy.
+            - **Server-side Signature Backfilling**: Implemented a server-side signature cache to automatically restore lost `thought_signature` from history messages, ensuring stable long conversations.
+            - **Naming Convention Normalization**: Standardized all signature field names to `thought_signature` (snake_case) to meet Google API requirements.
     *   **v3.2.8 (2025-12-26)**:
         - **Bug Fixes**:
             - **OpenAI Protocol Multi-modal & Vision Model Support**: Fixed the 400 error caused by `content` format mismatch when sending image requests to vision models (e.g., `gemini-3-pro-image`) via OpenAI protocol.

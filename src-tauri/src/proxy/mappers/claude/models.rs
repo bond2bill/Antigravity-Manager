@@ -175,7 +175,7 @@ pub struct GeminiPart {
     pub thought: Option<bool>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "thoughtSignature")]
+    #[serde(rename = "thought_signature", alias = "thoughtSignature")]
     pub thought_signature: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]

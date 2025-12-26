@@ -49,6 +49,7 @@ pub struct StreamingState {
     used_tool: bool,
     signatures: SignatureManager,
     trailing_signature: Option<String>,
+    signature_map: Option<Arc<tokio::sync::Mutex<std::collections::HashMap<String, String>>>>,
 }
 
 impl StreamingState {
@@ -61,9 +62,18 @@ impl StreamingState {
             used_tool: false,
             signatures: SignatureManager::new(),
             trailing_signature: None,
+            signature_map: None,
         }
     }
 
+    pub fn set_signature_map(&mut self, map: Option<Arc<tokio::sync::Mutex<std::collections::HashMap<String, String>>>>) {
+        self.signature_map = map;
+    }
+
+    /// 获取签名缓存 map (Clone handle)
+    pub fn get_signature_map(&self) -> Option<Arc<tokio::sync::Mutex<std::collections::HashMap<String, String>>>> {
+        self.signature_map.clone()
+    }
     /// 发送 SSE 事件
     pub fn emit(&self, event_type: &str, data: serde_json::Value) -> Bytes {
         let sse = format!(
@@ -457,6 +467,15 @@ impl<'a> PartProcessor<'a> {
             format!("{}-{}", fc.name, crate::proxy::common::utils::generate_random_id())
         });
 
+        // 核心修复：异步存储签名到服务端的全局 map
+        if let (Some(sig), Some(map)) = (signature.clone(), self.state.get_signature_map()) {
+            let tid = tool_id.clone();
+            tokio::spawn(async move {
+                let mut m = map.lock().await;
+                m.insert(tid, sig);
+            });
+        }
+
         // 1. 发送 content_block_start (input 为空对象)
         let mut tool_use = json!({
             "type": "tool_use",
@@ -486,6 +505,8 @@ impl<'a> PartProcessor<'a> {
         chunks
     }
 }
+
+use std::sync::Arc;
 
 #[cfg(test)]
 mod tests {

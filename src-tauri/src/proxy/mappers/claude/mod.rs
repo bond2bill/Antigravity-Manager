@@ -19,13 +19,16 @@ use std::pin::Pin;
 /// 创建从 Gemini SSE 流到 Claude SSE 流的转换
 pub fn create_claude_sse_stream(
     mut gemini_stream: Pin<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Send>>,
+    signature_map: Option<Arc<tokio::sync::Mutex<std::collections::HashMap<String, String>>>>,
 ) -> Pin<Box<dyn Stream<Item = Result<Bytes, String>> + Send>> {
     use async_stream::stream;
     use futures::StreamExt;
     use bytes::BytesMut;
+    use std::sync::Arc;
 
     Box::pin(stream! {
         let mut state = StreamingState::new();
+        state.set_signature_map(signature_map);
         let mut buffer = BytesMut::new();
 
         while let Some(chunk_result) = gemini_stream.next().await {
@@ -61,6 +64,10 @@ pub fn create_claude_sse_stream(
         }
     })
 }
+
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use std::collections::HashMap;
 
 /// 处理单行 SSE 数据
 fn process_sse_line(line: &str, state: &mut StreamingState) -> Option<Vec<Bytes>> {
