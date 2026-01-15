@@ -16,7 +16,7 @@ pub fn transform_openai_request(request: &OpenAIRequest, project_id: &str, mappe
         request.model, mapped_model, config.request_type, config.image_config.is_some());
     
     // 1. 提取所有 System Message 并注入补丁
-    let system_instructions: Vec<String> = request.messages.iter()
+    let mut system_instructions: Vec<String> = request.messages.iter()
         .filter(|msg| msg.role == "system")
         .filter_map(|msg| {
             msg.content.as_ref().map(|c| match c {
@@ -33,6 +33,14 @@ pub fn transform_openai_request(request: &OpenAIRequest, project_id: &str, mappe
             })
         })
         .collect();
+
+    // [NEW] 如果请求中包含 instructions 字段，优先使用它
+    if let Some(inst) = &request.instructions {
+        if !inst.is_empty() {
+            system_instructions.insert(0, inst.clone());
+        }
+    }
+
 
 
 

@@ -300,7 +300,17 @@
             "clear_logs": "Limpar Cache de Logs",
             "clear_logs_title": "Confirmação de Limpeza de Logs",
             "clear_logs_msg": "Tem certeza de que deseja limpar todos os arquivos de cache de log?",
-            "logs_cleared": "Cache de logs limpo"
+            "logs_cleared": "Cache de logs limpo",
+            "http_api_title": "Serviço HTTP API",
+            "http_api_desc": "Fornece interface HTTP local para programas externos (por exemplo, plugins do VS Code).",
+            "http_api_enabled": "Habilitar HTTP API",
+            "http_api_enabled_desc": "Quando habilitado, programas externos podem gerenciar contas via interface HTTP",
+            "http_api_port": "Porta de Escuta",
+            "http_api_port_desc": "Reinício necessário após alterar a porta. Se ocorrer conflito de porta, use outra porta disponível.",
+            "http_api_port_placeholder": "Porta padrão 19527",
+            "http_api_port_invalid": "Número de porta inválido (intervalo: 1024-65535)",
+            "http_api_settings_saved": "Configurações HTTP API salvas, reinício necessário para aplicar",
+            "http_api_restart_required": "⚠️ Reinício necessário para aplicar"
         },
         "about": {
             "title": "Sobre",

@@ -43,10 +43,10 @@ static CLAUDE_TO_GEMINI: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|
     // Gemini 协议映射表
     m.insert("gemini-2.5-flash-lite", "gemini-2.5-flash-lite");
     m.insert("gemini-2.5-flash-thinking", "gemini-2.5-flash-thinking");
-    m.insert("gemini-3-pro-low", "gemini-3-pro-low");
-    m.insert("gemini-3-pro-high", "gemini-3-pro-high");
+    m.insert("gemini-3-pro-low", "gemini-3-pro-preview");
+    m.insert("gemini-3-pro-high", "gemini-3-pro-preview");
     m.insert("gemini-3-pro-preview", "gemini-3-pro-preview");
-    m.insert("gemini-3-pro", "gemini-3-pro");  // [FIX PR #368] 添加基础模型支持
+    m.insert("gemini-3-pro", "gemini-3-pro-preview");  // [FIX PR #368] 统一映射到 preview
     m.insert("gemini-2.5-flash", "gemini-2.5-flash");
     m.insert("gemini-3-flash", "gemini-3-flash");
     m.insert("gemini-3-pro-image", "gemini-3-pro-image");
@@ -64,6 +64,12 @@ pub fn map_claude_model_to_gemini(input: &str) -> String {
     // 2. Pass-through known prefixes (gemini-, -thinking) to support dynamic suffixes
     if input.starts_with("gemini-") || input.contains("thinking") {
         return input.to_string();
+    }
+
+    // [NEW] Intelligent fallback based on model keywords
+    let lower = input.to_lowercase();
+    if lower.contains("opus") {
+        return "gemini-3-pro-preview".to_string();
     }
 
     // 3. Fallback to default
@@ -196,7 +202,7 @@ pub fn normalize_to_standard_id(model_name: &str) -> Option<String> {
     
     // Gemini Pro variants (including thinking models)
     if lower.contains("gemini") && (lower.contains("pro") || lower.contains("1.5-pro") || lower.contains("2.5-pro")) {
-        return Some("gemini-3-pro-high".to_string());
+        return Some("gemini-3-pro-preview".to_string());
     }
     
     // Claude Sonnet variants

@@ -262,7 +262,17 @@
             "clear_logs": "Log Önbelleğini Temizle",
             "clear_logs_title": "Log Temizleme Onayı",
             "clear_logs_msg": "Tüm log önbellek dosyalarını temizlemek istediğinizden emin misiniz?",
-            "logs_cleared": "Log önbelleği temizlendi"
+            "logs_cleared": "Log önbelleği temizlendi",
+            "http_api_title": "HTTP API Servisi",
+            "http_api_desc": "Harici programlar (örn. VS Code eklentileri) için yerel HTTP arayüzü sağlar.",
+            "http_api_enabled": "HTTP API'yi Etkinleştir",
+            "http_api_enabled_desc": "Etkinleştirildiğinde, harici programlar HTTP arayüzü üzerinden hesapları yönetebilir",
+            "http_api_port": "Dinleme Portu",
+            "http_api_port_desc": "Port değiştirildikten sonra uygulamanın yeniden başlatılması gerekir. Port çakışması durumunda başka bir kullanılabilir port kullanın.",
+            "http_api_port_placeholder": "Varsayılan port 19527",
+            "http_api_port_invalid": "Geçersiz port numarası (aralık: 1024-65535)",
+            "http_api_settings_saved": "HTTP API ayarları kaydedildi, uygulamak için yeniden başlatma gerekli",
+            "http_api_restart_required": "⚠️ Uygulamak için yeniden başlatma gerekli"
         },
         "about": {
             "title": "Hakkında",
