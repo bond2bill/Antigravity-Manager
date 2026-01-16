@@ -131,19 +131,57 @@ function getTimeColorClass(resetTime: string | undefined): string {
     }
 }
 
+// ============================================================================
+// 模型分组配置
+// ============================================================================
+
+const MODEL_GROUPS = {
+    CLAUDE: [
+        'claude-sonnet-4-5',
+        'claude-sonnet-4-5-thinking',
+        'claude-opus-4-5-thinking'
+    ],
+    GEMINI_PRO: [
+        'gemini-3-pro-high',
+        'gemini-3-pro-low',
+        'gemini-3-pro-preview'
+    ],
+    GEMINI_FLASH: [
+        'gemini-3-flash'
+    ]
+};
+
 function isModelProtected(protectedModels: string[] | undefined, modelName: string): boolean {
     if (!protectedModels || protectedModels.length === 0) return false;
-    const lower = modelName.toLowerCase();
-    if (lower.includes('flash') && lower.includes('gemini')) {
-        return protectedModels.includes('gemini-3-flash');
+    const lowerName = modelName.toLowerCase();
+
+    // Helper to check if any model in the group is protected
+    const isGroupProtected = (group: string[]) => {
+        return group.some(m => protectedModels.includes(m));
+    };
+
+    // UI Column Keys Mapping (for backward compatibility with hardcoded UI calls)
+    if (lowerName === 'gemini-pro') return isGroupProtected(MODEL_GROUPS.GEMINI_PRO);
+    if (lowerName === 'gemini-flash') return isGroupProtected(MODEL_GROUPS.GEMINI_FLASH);
+    if (lowerName === 'claude-sonnet') return isGroupProtected(MODEL_GROUPS.CLAUDE);
+
+    // 1. Gemini Pro Group
+    if (MODEL_GROUPS.GEMINI_PRO.some(m => lowerName === m)) {
+        return isGroupProtected(MODEL_GROUPS.GEMINI_PRO);
     }
-    if (lower.includes('gemini') && lower.includes('pro')) {
-        return protectedModels.includes('gemini-3-pro-preview');
+
+    // 2. Claude Group
+    if (MODEL_GROUPS.CLAUDE.some(m => lowerName === m)) {
+        return isGroupProtected(MODEL_GROUPS.CLAUDE);
     }
-    if (lower.includes('claude') && lower.includes('sonnet')) {
-        return protectedModels.includes('claude-sonnet-4-5');
+
+    // 3. Gemini Flash Group
+    if (MODEL_GROUPS.GEMINI_FLASH.some(m => lowerName === m)) {
+        return isGroupProtected(MODEL_GROUPS.GEMINI_FLASH);
     }
-    return false;
+
+    // 兜底直接检查 (Strict check for exact match or normalized ID)
+    return protectedModels.includes(lowerName);
 }
 
 // ============================================================================
