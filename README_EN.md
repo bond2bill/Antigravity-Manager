@@ -188,6 +188,10 @@ print(response.choices[0].message.content)
 
 *   **Changelog**:
     *   **v3.3.42 (2026-01-18)**:
+        - **[Traffic Log Enhancement] Protocol Recognition & Stream Integration (PR #814)**:
+            - **Protocol Labeling**: Traffic logs now automatically identify and label protocol types (OpenAI in Green, Anthropic in Orange, Gemini in Blue) based on URI, providing instant clarity on request sources.
+            - **Full Stream Consolidation**: Resolved the issue where streaming responses only displayed `[Stream Data]`. The proxy now intercepts and aggregates stream chunks, restoring scattered `delta` fragments into complete response content and "thinking" processes for significantly improved debugging.
+            - **i18n Support**: Completed i18n translations for traffic log features across 8 languages.
         - **[Critical Fix] Deep Refactoring of Gemini JSON Schema Cleaning (Issue #815)**:
             - **Resolved Property Loss**: Implemented "Best Branch Merging" logic for `anyOf`/`oneOf` structures in tool definitions. It automatically extracts properties from the richest branch, fixing the long-standing `malformed function call` error.
             - **Robust Whitelist Mechanism**: Adopted a strict allowlist approach to remove fields unsupported by Gemini, ensuring 100% API compatibility and eliminating 400 errors.
